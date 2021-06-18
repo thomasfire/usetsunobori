@@ -1,11 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
+
+#include "omg_serv.h"
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "EMGCtrl.generated.h"
-
 
 /**
  * 
@@ -16,28 +15,45 @@ class USETSUNOBORI_API AEMGCtrl : public APlayerController
     GENERATED_BODY()
 
 public:
-    //AEMGCtrl();
+    AEMGCtrl();
+    //AEMGCtrl(const class FObjectInitializer& PCIP);
 
-   /* virtual void BeginPlay() override;
+    virtual void BeginPlay() final;
 
-    virtual void Tick(float DeltaTime) override;*/
+    UFUNCTION(BlueprintCallable, Category = "SetComPath")
+    void SetComPath(UPARAM(DisplayName = "Path") FString path);
 
-   /* virtual void NotifyLHSStartObject(FName ObjectName);
-    virtual void NotifyLHSStopObject(FName ObjectName);
+    UFUNCTION(BlueprintCallable, Category = "Reset")
+    void ResetEMG(
+        UPARAM(DisplayName = "Port_n") int port,
+        UPARAM(DisplayName = "is_high") bool is_high, 
+        UPARAM(DisplayName = "reset") bool reset
+    );
 
+    //virtual void Tick(float DeltaTime) override;
 
-    virtual void NotifyRHSStartObject(FName ObjectName);
-    virtual void NotifyRHSStopObject(FName ObjectName);
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Left hand EMG is high"))
+    void LHSStartEvt();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Left hand EMG is low"))
+    void LHSStopEvt();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Right hand EMG is high"))
+    void RHSStartEvt();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Right hand EMG is low"))
+    void RHSStopEvt();
 
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Both hands EMG are high"))
+    void MHSStartEvt();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Both hands EMG are low"))
+    void MHSStopEvt();
 
-    virtual void NotifyMHSStartObject(FName ObjectName);
-    virtual void NotifyMHSStopObject(FName ObjectName);*/
-    /*
-    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "On Used ~ Player wants to use this object"))
-    void OnMyStuffUsed();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction", meta = (DisplayName = "Error received from EMG"))
+    void EMGErrorEvt(UPARAM(DisplayName = "Port_n") int errcode);
 
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMyStuffUsed);
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-    FOnMyStuffUsed OnMyStuffUsed;*/
-	
+    static void emg_dispatcher(omg_serial_recv_t recv);
+    static void emg_error_dispatcher(OMGERRSTAT recv);
+
+public:
+    omg_serial_serv_t *emg_ctrl_;
+    unsigned l_state = 0;
+    unsigned r_state = 0;
 };
