@@ -1,2 +1,0 @@
-D:\usetsunobori-master\usetsunobori-master\Intermediate\Build\Win64\UE4Editor\Development\Usetsunobori\Definitions.Usetsunobori.h
-D:\usetsunobori-master\usetsunobori-master\Source\Usetsunobori\Usetsunobori.h

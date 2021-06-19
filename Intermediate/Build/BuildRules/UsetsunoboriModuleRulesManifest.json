@@ -1,8 +1,0 @@
-{
-	"SourceFiles": [
-		"D:\\usetsunobori-master\\usetsunobori-master\\Source\\Usetsunobori\\Usetsunobori.Build.cs",
-		"D:\\usetsunobori-master\\usetsunobori-master\\Source\\Usetsunobori.Target.cs",
-		"D:\\usetsunobori-master\\usetsunobori-master\\Source\\UsetsunoboriEditor.Target.cs"
-	],
-	"EngineVersion": "4.26.2"
-}
