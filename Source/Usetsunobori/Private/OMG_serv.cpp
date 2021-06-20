@@ -12,8 +12,9 @@
 #include <thread>
 #include <chrono>
 
-#define KEEP_MEASURES 128
+#define KEEP_MEASURES 12
 #define PORTS_N 5
+#define REFRESH_TIME 3ms
 
 // гении мелкомягкие не поддерживают возврат значення из макро
 #define AVERAGE(arr, target) do{uint32_t buffer_sum=0; for(uint16_t _i=0;_i<KEEP_MEASURES;_i++) {buffer_sum+=(arr)[_i];}; target=buffer_sum/KEEP_MEASURES;}while(0)
@@ -108,7 +109,7 @@ static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 			serv->input_callback(buffer_state);
 		}
 
-		std::this_thread::sleep_for(1ms);
+		std::this_thread::sleep_for(REFRESH_TIME);
 	}
 
 	if (serv->error_callback) {
