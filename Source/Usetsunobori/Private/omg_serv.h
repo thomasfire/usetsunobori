@@ -12,9 +12,10 @@ typedef enum {
 
 
 typedef enum {
-	OMG_ERR_UNKNOWN = 0,
-	OMG_ERR_DISCNCT = 1, // disconnect
-	OMG_ERR_STOP = 2 // server is stopped
+	OMG_ERR_OK = 0,
+	OMG_ERR_UNKNOWN = 1,
+	OMG_ERR_DISCNCT = 2, // disconnect
+	OMG_ERR_STOP = 3 // server is stopped
 } OMGERRSTAT;
 
 typedef struct {

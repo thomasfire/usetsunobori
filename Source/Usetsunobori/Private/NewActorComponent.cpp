@@ -109,13 +109,32 @@ UNewActorComponent::UNewActorComponent()
 }
 
 
+UNewActorComponent::~UNewActorComponent()
+{
+    if (this->emg_ctrl_) omg_serv_free(this->emg_ctrl_);
+    emg_ctrl_ = NULL;
+    use_instance = NULL;
+}
+
 // Called when the game starts
 void UNewActorComponent::BeginPlay()
 {
 	Super::BeginPlay();
+    //if (this->emg_ctrl_) omg_serv_start(this->emg_ctrl_);
+}
+
+void UNewActorComponent::StartEMGServ() {
     if (this->emg_ctrl_) omg_serv_start(this->emg_ctrl_);
-	// ...
-	
+}
+
+void UNewActorComponent::StopEMGServ() {
+    if (this->emg_ctrl_) omg_serv_send_stop(this->emg_ctrl_);
+}
+
+void UNewActorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    if (this->emg_ctrl_) omg_serv_send_stop(this->emg_ctrl_);
 }
 
 
@@ -123,7 +142,5 @@ void UNewActorComponent::BeginPlay()
 void UNewActorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 

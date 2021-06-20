@@ -29,6 +29,7 @@ struct omg_serial_serv_t {
 	uint16_t begin_ind;
 	uint16_t current_lo[PORTS_N];
 	uint16_t current_hi[PORTS_N];
+	OMGERRSTAT current_error;
 };
 
 
@@ -82,6 +83,16 @@ void omg_serv_set_current_as_high(omg_serial_serv_t* serv, unsigned reset, uint1
 	serv->current_hi[port_n] = reset ? current_avg : (current_avg + serv->current_hi[port_n]) / 2;
 }
 
+static void omg_serv_handle_error(omg_serial_serv_t *serv, OMGERRSTAT state) {
+	if (!serv) return;
+	
+	if (state != serv->current_error && serv->error_callback) {
+		serv->current_error = state;
+		serv->error_callback(state);
+	}
+	serv->current_error = state;
+}
+
 // 「Сколько будет стоить　залупливание видео?」-「В смысле не понял? Loop - зациклить, вы английский не учили?」
 static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 	using namespace std::chrono_literals;
@@ -94,8 +105,8 @@ static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 		serv->begin_ind = (serv->begin_ind + 1) % KEEP_MEASURES;
 		int have_read = serv->file_handler->readSerialPort(io_buff, sizeof(io_buff));
 
-		if (serv->error_callback && have_read < sizeof(io_buff)) {
-			serv->error_callback(serv->file_handler->isConnected() ? OMG_ERR_UNKNOWN : OMG_ERR_DISCNCT);
+		if (have_read < sizeof(io_buff)) {
+			omg_serv_handle_error(serv, serv->file_handler->isConnected() ? OMG_ERR_UNKNOWN : OMG_ERR_DISCNCT);
 			continue;
 		}
 
@@ -112,10 +123,7 @@ static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 		std::this_thread::sleep_for(REFRESH_TIME);
 	}
 
-	if (serv->error_callback) {
-		serv->error_callback(OMG_ERR_STOP);
-	}
-
+	omg_serv_handle_error(serv, OMG_ERR_STOP);
 }
 
 unsigned omg_serv_start(omg_serial_serv_t* serv) {

@@ -19,50 +19,57 @@ class USETSUNOBORI_API UNewActorComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UNewActorComponent();
+    ~UNewActorComponent();
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-    UFUNCTION(BlueprintCallable, Category = "Set EMG ComPath")
+    UFUNCTION(BlueprintCallable, Category = "EMG Serv")
     void SetComPath(UPARAM(DisplayName = "Path") FString path);
 
-    UFUNCTION(BlueprintCallable, Category = "Reset EMG Level")
+    UFUNCTION(BlueprintCallable, Category = "EMG Serv")
     void ResetEMG(
         UPARAM(DisplayName = "Port_n") int port,
         UPARAM(DisplayName = "is_high") bool is_high,
         UPARAM(DisplayName = "reset") bool reset
     );
 
+    UFUNCTION(BlueprintCallable, Category = "EMG Serv")
+    void StartEMGServ();
+
+    UFUNCTION(BlueprintCallable, Category = "EMG Serv")
+    void StopEMGServ();
 
     static void emg_dispatcher(omg_serial_recv_t recv);
     static void emg_error_dispatcher(OMGERRSTAT recv);
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed LHSStartUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed LHSStartUsed;
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed LHSStopUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed LHSStopUsed;
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed RHSStartUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed RHSStartUsed;
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed RHSStopUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed RHSStopUsed;
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed MHSStartUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed MHSStartUsed;
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed MHSStopUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed MHSStopUsed;
 
-    UPROPERTY(BlueprintAssignable, Category = "Interaction")
-        FOnEMGUsed EMGErrorUsed;
+    UPROPERTY(BlueprintAssignable, Category = "EMG Serv")
+    FOnEMGUsed EMGErrorUsed;
 
 public:
     omg_serial_serv_t* emg_ctrl_;
