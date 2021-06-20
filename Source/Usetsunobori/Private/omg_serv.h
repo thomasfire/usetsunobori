@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#define OMGDEVELOPEMENT_LOG 1
+
 typedef enum {
 	OMG_PORT_0 = 1 << 0,
 	OMG_PORT_1 = 1 << 1,
@@ -37,4 +39,8 @@ void omg_serv_set_current_as_high(omg_serial_serv_t* serv, unsigned reset, uint1
 unsigned omg_serv_start(omg_serial_serv_t* serv);
 unsigned omg_serv_state(omg_serial_serv_t* serv);
 unsigned omg_serv_send_stop(omg_serial_serv_t* serv);
+
+#ifdef OMGDEVELOPEMENT_LOG
+unsigned omg_serv_get_channels(omg_serial_serv_t* serv, uint16_t *chan1, uint16_t *chan2, uint16_t *chan3, uint16_t *chan4, uint16_t *chan5);
+#endif
 

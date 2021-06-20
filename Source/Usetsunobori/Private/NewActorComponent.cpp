@@ -32,66 +32,28 @@ void UNewActorComponent::ResetEMG(int port, bool is_high, bool reset) {
 
 void UNewActorComponent::emg_dispatcher(omg_serial_recv_t recv) {
     UNewActorComponent* instance = (UNewActorComponent*)use_instance;
+    if (GEngine)
+        GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, FString::Printf(TEXT("Status bits: %hu"), recv.statuses_bits));
 
-    if ((recv.statuses_bits & (OMG_PORT_0 & OMG_PORT_1)) == (OMG_PORT_0 & OMG_PORT_1)) { // pressed both
-        if (instance->l_state && instance->r_state) return;
-
-        if (instance->l_state) instance->LHSStopUsed.Broadcast();
-        if (instance->r_state) instance->RHSStopUsed.Broadcast();
-        instance->l_state = 1;
-        instance->r_state = 1;
-        instance->MHSStartUsed.Broadcast();
-    }
-    else if ((recv.statuses_bits & (OMG_PORT_0 & OMG_PORT_1)) == OMG_PORT_0) { // left only
-        if (instance->l_state && instance->r_state) {
-            instance->MHSStopUsed.Broadcast();
-            instance->l_state = 0;
-            instance->r_state = 0;
-        }
-        if (instance->r_state) {
-            instance->RHSStopUsed.Broadcast();
-            instance->r_state = 0;
-        }
-        if (instance->l_state) return;
-        instance->l_state = 1;
-        instance->LHSStartUsed.Broadcast();
-    }
-    else if ((recv.statuses_bits & (OMG_PORT_0 & OMG_PORT_1)) == OMG_PORT_1) { // right only
-        if (instance->l_state && instance->r_state) {
-            instance->MHSStopUsed.Broadcast();
-            instance->l_state = 0;
-            instance->r_state = 0;
-        }
-        if (instance->l_state) {
-            instance->LHSStopUsed.Broadcast();
-            instance->l_state = 0;
-        }
-        if (instance->r_state) return;
-        instance->r_state = 1;
-        instance->RHSStartUsed.Broadcast();
-    }
-    else { // released all
-        if (instance->l_state && instance->r_state) {
-            instance->l_state = 0;
-            instance->r_state = 0;
-            instance->MHSStopUsed.Broadcast();
-        }
-        if (instance->l_state) {
-            instance->l_state = 0;
-            instance->LHSStopUsed.Broadcast();
-        }
-        if (instance->r_state) {
-            instance->r_state = 0;
-            instance->RHSStopUsed.Broadcast();
-        }
-    }
-
+    instance->dispatch_que = recv.statuses_bits; // там чет падает если слишком долгий ивент, так как эта функция вызывается из другого потока
+    return;
 }
 
 void UNewActorComponent::emg_error_dispatcher(OMGERRSTAT recv) {
     UNewActorComponent* instance = (UNewActorComponent*)use_instance;
 
     instance->EMGErrorUsed.Broadcast();
+} 
+
+FString UNewActorComponent::GetEMGState() {
+    UNewActorComponent* instance = (UNewActorComponent*)use_instance;
+    uint16_t lband, rband;
+#ifdef OMGDEVELOPEMENT_LOG
+    omg_serv_get_channels(instance->emg_ctrl_, &lband, &rband, NULL, NULL, NULL);
+    return FString::Printf(TEXT("L: %hu; R: %hu"), lband, rband);
+#else
+    return FString::Printf(TEXT(""));
+#endif
 }
 
 
@@ -104,8 +66,6 @@ UNewActorComponent::UNewActorComponent()
 
     emg_ctrl_ = NULL;
     use_instance = this;
-
-	// ...
 }
 
 
@@ -120,7 +80,6 @@ UNewActorComponent::~UNewActorComponent()
 void UNewActorComponent::BeginPlay()
 {
 	Super::BeginPlay();
-    //if (this->emg_ctrl_) omg_serv_start(this->emg_ctrl_);
 }
 
 void UNewActorComponent::StartEMGServ() {
@@ -142,5 +101,60 @@ void UNewActorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UNewActorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    uint16_t current_que = dispatch_que; // костыльно конечно, но мы тут и не запуск ракет проектируем
+    dispatch_que = 0;
+
+    if ((current_que & (OMG_PORT_0 | OMG_PORT_1)) == (OMG_PORT_0 & OMG_PORT_1)) { // pressed both
+        if (this->l_state && this->r_state) return;
+
+        if (this->l_state) this->LHSStopUsed.Broadcast();
+        if (this->r_state) this->RHSStopUsed.Broadcast();
+        this->l_state = 1;
+        this->r_state = 1;
+        this->MHSStartUsed.Broadcast();
+    }
+    else if ((current_que & (OMG_PORT_0 | OMG_PORT_1)) == OMG_PORT_0) { // left only
+        if (this->l_state && this->r_state) {
+            this->MHSStopUsed.Broadcast();
+            this->l_state = 0;
+            this->r_state = 0;
+        }
+        if (this->r_state) {
+            this->RHSStopUsed.Broadcast();
+            this->r_state = 0;
+        }
+        if (this->l_state) return;
+        this->l_state = 1;
+        this->LHSStartUsed.Broadcast();
+    }
+    else if ((current_que & (OMG_PORT_0 | OMG_PORT_1)) == OMG_PORT_1) { // right only
+        if (this->l_state && this->r_state) {
+            this->MHSStopUsed.Broadcast();
+            this->l_state = 0;
+            this->r_state = 0;
+        }
+        if (this->l_state) {
+            this->LHSStopUsed.Broadcast();
+            this->l_state = 0;
+        }
+        if (this->r_state) return;
+        this->r_state = 1;
+        this->RHSStartUsed.Broadcast();
+    }
+    else { // released all
+        if (this->l_state && this->r_state) {
+            this->l_state = 0;
+            this->r_state = 0;
+            this->MHSStopUsed.Broadcast();
+        }
+        if (this->l_state) {
+            this->l_state = 0;
+            this->LHSStopUsed.Broadcast();
+        }
+        if (this->r_state) {
+            this->r_state = 0;
+            this->RHSStopUsed.Broadcast();
+        }
+    }
 }
 

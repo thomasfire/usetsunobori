@@ -14,7 +14,7 @@
 
 #define KEEP_MEASURES 12
 #define PORTS_N 5
-#define REFRESH_TIME 3ms
+#define REFRESH_TIME 10ms
 
 // гении мелкомягкие не поддерживают возврат значення из макро
 #define AVERAGE(arr, target) do{uint32_t buffer_sum=0; for(uint16_t _i=0;_i<KEEP_MEASURES;_i++) {buffer_sum+=(arr)[_i];}; target=buffer_sum/KEEP_MEASURES;}while(0)
@@ -93,7 +93,7 @@ static void omg_serv_handle_error(omg_serial_serv_t *serv, OMGERRSTAT state) {
 	serv->current_error = state;
 }
 
-// 「Сколько будет стоить　залупливание видео?」-「В смысле не понял? Loop - зациклить, вы английский не учили?」
+// 「Сколько будет стоить　залупливание видео?」-「В смысле  не понял? Loop - зациклить, вы английский не учили?」
 static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 	using namespace std::chrono_literals;
 	if (!serv) return;
@@ -105,7 +105,7 @@ static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 		serv->begin_ind = (serv->begin_ind + 1) % KEEP_MEASURES;
 		int have_read = serv->file_handler->readSerialPort(io_buff, sizeof(io_buff));
 
-		if (have_read < sizeof(io_buff)) {
+		if (have_read != sizeof(io_buff)) {
 			omg_serv_handle_error(serv, serv->file_handler->isConnected() ? OMG_ERR_UNKNOWN : OMG_ERR_DISCNCT);
 			continue;
 		}
@@ -119,6 +119,7 @@ static void omg_serv_server_looper(omg_serial_serv_t* serv) {
 		if (serv->input_callback && (current_state.port_bit != buffer_state.port_bit || current_state.statuses_bits != buffer_state.statuses_bits)) {
 			serv->input_callback(buffer_state);
 		}
+		current_state = buffer_state;
 
 		std::this_thread::sleep_for(REFRESH_TIME);
 	}
@@ -146,3 +147,16 @@ unsigned omg_serv_send_stop(omg_serial_serv_t* serv) {
 	}
 	return 0;
 }
+
+
+#ifdef OMGDEVELOPEMENT_LOG
+unsigned omg_serv_get_channels(omg_serial_serv_t* serv, uint16_t* chan1, uint16_t* chan2, uint16_t* chan3, uint16_t* chan4, uint16_t* chan5) {
+	if (!serv) return 0;
+	if (chan1) *chan1 = serv->last_measures[0][serv->begin_ind];
+	if (chan2) *chan2 = serv->last_measures[1][serv->begin_ind];
+	if (chan3) *chan3 = serv->last_measures[2][serv->begin_ind];
+	if (chan4) *chan4 = serv->last_measures[3][serv->begin_ind];
+	if (chan5) *chan5 = serv->last_measures[4][serv->begin_ind];
+	return 1;
+}
+#endif

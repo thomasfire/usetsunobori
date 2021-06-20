@@ -4,6 +4,8 @@
 
 #include "omg_serv.h"
 
+#include <atomic>
+
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "NewActorComponent.generated.h"
@@ -47,6 +49,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "EMG Serv")
     void StopEMGServ();
 
+
+    UFUNCTION(BlueprintCallable, Category = "EMG Serv")
+    static FString GetEMGState();
+
     static void emg_dispatcher(omg_serial_recv_t recv);
     static void emg_error_dispatcher(OMGERRSTAT recv);
 
@@ -75,4 +81,5 @@ public:
     omg_serial_serv_t* emg_ctrl_;
     unsigned l_state = 0;
     unsigned r_state = 0;
+    std::atomic<uint16_t> dispatch_que = 0; // ъуъ ъука не падать нуъуъ
 };
